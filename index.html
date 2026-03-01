@@ -45,6 +45,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg-primary);color:var(--te
 .period-rides{flex:1;overflow-y:auto;padding:8px 16px 16px}
 .demo-btn{margin:0 16px 12px;padding:10px;border:1px dashed var(--border-light);border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;width:calc(100% - 32px);text-align:center}
 .demo-btn:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(0,176,255,0.05)}
+.data-btns{display:flex;gap:6px;margin:0 16px 12px;width:calc(100% - 32px)}
+.data-btn{flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s;text-align:center}
+.data-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,230,118,0.05)}
 .period-ride{padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;border:1px solid transparent;margin-bottom:3px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
 .period-ride:hover{background:var(--bg-card)}
 .period-ride-date{color:var(--text-secondary);font-weight:500}
@@ -156,6 +159,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg-primary);color:var(--te
         <input type="file" id="fileInput" multiple accept=".fit,.gpx" style="display:none">
       </div>
       <button class="demo-btn" id="demoBtn">🎲 <span data-i18n="demoBtn">Načíst demo data</span></button>
+      <div class="data-btns">
+        <button class="data-btn" id="exportBtn">📤 <span data-i18n="exportBtn">Export dat</span></button>
+        <button class="data-btn" id="importBtn">📥 <span data-i18n="importBtn">Import dat</span></button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
       <div class="period-rides" id="periodRides"></div>
     </div>
     <div class="sidebar-section" id="sidebarRides">
@@ -241,7 +249,7 @@ lblAlt:'Nadm. výška (m)',lblSpeed:'Rychlost (km/h)',lblPower:'Výkon (W)',lblC
 avgCadLabel:'Ø kadence',maxLabel:'max',
 compareBtn:'Porovnat vybrané',compareClear:'✕',compareTitle:'Porovnání jízd',
 cmpSelect:'Vyber 2–4 jízdy v záložce Jízdy',cmpMetric:'Metrika',
-dateFmt:'cs-CZ',demoBtn:'Načíst demo data',demoLoaded:'Demo data načtena',demoClear:'Smazat vše'},
+dateFmt:'cs-CZ',demoBtn:'Načíst demo data',demoLoaded:'Demo data načtena',demoClear:'Smazat vše',exportBtn:'Export dat',importBtn:'Import dat',exported:'Data exportována',imported:'Import dokončen',importErr:'Chybný soubor'},
 en:{navDashboard:'Dashboard',navRides:'Rides',navCompare:'Compare',
 dropText:'Drag & drop FIT/GPX files',dropHint:'or click to browse',
 period:'Period',day:'Day',week:'Week',month:'Month',year:'Year',all:'All',
@@ -260,7 +268,7 @@ lblAlt:'Altitude (m)',lblSpeed:'Speed (km/h)',lblPower:'Power (W)',lblCadence:'C
 avgCadLabel:'Avg cadence',maxLabel:'max',
 compareBtn:'Compare selected',compareClear:'✕',compareTitle:'Ride comparison',
 cmpSelect:'Select 2–4 rides in the Rides tab',cmpMetric:'Metric',
-dateFmt:'en-GB',demoBtn:'Load demo data',demoLoaded:'Demo data loaded',demoClear:'Clear all'},
+dateFmt:'en-GB',demoBtn:'Load demo data',demoLoaded:'Demo data loaded',demoClear:'Clear all',exportBtn:'Export data',importBtn:'Import data',exported:'Data exported',imported:'Import complete',importErr:'Invalid file'},
 de:{navDashboard:'Dashboard',navRides:'Fahrten',navCompare:'Vergleich',
 dropText:'FIT/GPX-Dateien hierher ziehen',dropHint:'oder klicken zum Auswählen',
 period:'Zeitraum',day:'Tag',week:'Woche',month:'Monat',year:'Jahr',all:'Alle',
@@ -279,7 +287,7 @@ lblAlt:'Höhe (m)',lblSpeed:'Geschw. (km/h)',lblPower:'Leistung (W)',lblCadence:
 avgCadLabel:'Ø Trittfrequenz',maxLabel:'max',
 compareBtn:'Ausgewählte vergleichen',compareClear:'✕',compareTitle:'Fahrtenvergleich',
 cmpSelect:'Wähle 2–4 Fahrten im Fahrten-Tab',cmpMetric:'Metrik',
-dateFmt:'de-DE',demoBtn:'Demodaten laden',demoLoaded:'Demodaten geladen',demoClear:'Alles löschen'}
+dateFmt:'de-DE',demoBtn:'Demodaten laden',demoLoaded:'Demodaten geladen',demoClear:'Alles löschen',exportBtn:'Daten exportieren',importBtn:'Daten importieren',exported:'Daten exportiert',imported:'Import abgeschlossen',importErr:'Ungültige Datei'}
 };
 let lang=localStorage.getItem('davemtb-lang')||'cs';
 function t(k){return I18N[lang][k]||I18N.cs[k]||k}
@@ -523,6 +531,35 @@ function generateDemoData(){
   saveAllRides();renderRideList();switchView('dashboard');toast(t('demoLoaded'));
 }
 
+// ═══ Export / Import ═══
+function exportData(){
+  if(!state.rides.length){toast('No data',true);return}
+  const data={version:'3.1',exported:new Date().toISOString(),rides:state.rides.map(serializeRide)};
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`davemtb-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast(t('exported'));
+}
+async function importData(file){
+  try{
+    const text=await file.text();const data=JSON.parse(text);
+    if(!data.rides||!Array.isArray(data.rides))throw new Error('bad format');
+    let added=0;
+    data.rides.forEach(r=>{
+      const ride=deserializeRide(r);
+      const key=rideStartKey(ride);
+      if(!state.rides.find(x=>rideStartKey(x)===key)){
+        const num=parseInt(ride.id.replace('ride_',''));if(num>=rideIdCounter)rideIdCounter=num+1;
+        state.rides.push(ride);added++;
+      }
+    });
+    if(!state.activeRide&&state.rides.length)state.activeRide=state.rides[0];
+    saveAllRides();renderRideList();switchView('dashboard');
+    toast(`${t('imported')} (+${added})`);
+  }catch(e){console.error(e);toast(t('importErr'),true)}
+}
+
 // ═══ Events ═══
 const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput');
 dropZone.addEventListener('click',()=>fileInput.click());
@@ -542,6 +579,9 @@ document.getElementById('langPicker').addEventListener('click',e=>{const b=e.tar
 document.getElementById('compareGoBtn').addEventListener('click',()=>switchView('compare'));
 document.getElementById('compareClearBtn').addEventListener('click',()=>{state.compareRides=[];updateCompareUI();renderRideList()});
 document.getElementById('demoBtn').addEventListener('click',generateDemoData);
+document.getElementById('exportBtn').addEventListener('click',exportData);
+document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change',e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=''});
 window.addEventListener('resize',()=>{if(map)setTimeout(()=>map.invalidateSize(),100);if(cmpMap)setTimeout(()=>cmpMap.invalidateSize(),100)});
 translateUI();
 (async()=>{const saved=await loadAllRides();if(saved.length){saved.forEach(r=>{const key=rideStartKey(r);if(!state.rides.find(x=>rideStartKey(x)===key)){state.rides.push(r);const num=parseInt(r.id.replace('ride_',''));if(num>=rideIdCounter)rideIdCounter=num}});if(!state.activeRide)state.activeRide=state.rides[0]||null;renderRideList();switchView('dashboard')}})();
