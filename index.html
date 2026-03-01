@@ -116,7 +116,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg-primary);color:var(--te
 .ride-content{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:0;overflow:hidden;min-height:0}
 #map,#cmpMap{width:100%;height:100%}
 /* ── Compare view ── */
-.cmp-table-wrap{overflow:auto;padding:16px 20px;flex-shrink:0;max-height:260px}
+.cmp-table-wrap{overflow:auto;padding:16px 20px;flex-shrink:0;max-height:220px;border-bottom:1px solid var(--border)}
 .cmp-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace}
 .cmp-table th,.cmp-table td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
 .cmp-table th{text-align:left;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:10px;position:sticky;top:0;background:var(--bg-primary)}
@@ -217,7 +217,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg-primary);color:var(--te
     <div class="main-view" id="viewCompare">
       <div class="cmp-table-wrap" id="cmpTableWrap"></div>
       <div class="cmp-charts">
-        <div class="panel" style="grid-row:1/3"><div class="panel-header"><span class="panel-title" data-i18n="cmpMap">📍 Trasy</span></div><div class="panel-body"><div id="cmpMap"></div></div></div>
+        <div class="panel"><div class="panel-header"><span class="panel-title" data-i18n="cmpMap">📍 Trasy</span></div><div class="panel-body"><div id="cmpMap"></div></div></div>
         <div class="panel"><div class="panel-header"><span class="panel-title" data-i18n="cmpElev">⛰️ Výška</span></div><div class="panel-body"><div class="chart-container"><canvas id="cmpChartElev"></canvas></div></div></div>
         <div class="panel"><div class="panel-header"><span class="panel-title" data-i18n="cmpSpeed">🏎️ Rychlost</span></div><div class="panel-body"><div class="chart-container"><canvas id="cmpChartSpeed"></canvas></div></div></div>
         <div class="panel"><div class="panel-header"><span class="panel-title" data-i18n="cmpPower">⚡ Výkon</span></div><div class="panel-body"><div class="chart-container"><canvas id="cmpChartPower"></canvas></div></div></div>
